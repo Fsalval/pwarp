@@ -156,7 +156,7 @@ function buildShell(): string {
               <button class="plat-btn" data-plat="facebook">Facebook</button>
               <button class="plat-btn" data-plat="facebook_lite">FB Lite</button>
               <button class="plat-btn" data-plat="instagram">Instagram</button>
-              <button class="plat-btn" data-plat="twitter">X / Twitter</button>
+              <button class="plat-btn" data-plat="twitter">Twitter / X</button>
               <button class="plat-btn" data-plat="whatsapp">WhatsApp</button>
               <button class="plat-btn" data-plat="tiktok">TikTok</button>
             </div>
