@@ -1,4 +1,5 @@
-import { fixSpaces } from '../../pwa-roleplay-writer/src/modules/spaces/index'
+import { fixSpaces } from '../modules/auth/spaces/index'
+
 import type { Platform } from '../types/index'
 
 interface PlatformDimensions {

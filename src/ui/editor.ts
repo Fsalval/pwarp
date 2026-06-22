@@ -1,9 +1,10 @@
-import { countWords, DEFAULT_OPTIONS } from '../../pwa-roleplay-writer/src/modules/counter/index'
-import { getAllPreviews, convertToStyle, STYLES, type UnicodeStyle } from '../../pwa-roleplay-writer/src/modules/unicode/index'
-import { filterSymbols, getCategories, type Platform } from '../../pwa-roleplay-writer/src/modules/symbols/index'
-import { getCurrentUser, signInWithEmail, signUpWithEmail, signOut, onAuthChange } from '../../pwa-roleplay-writer/src/modules/auth/index'
-import { getTemplates, createTemplate, deleteTemplate } from '../../pwa-roleplay-writer/src/modules/templates/index'
-import { checkText } from '../../pwa-roleplay-writer/src/modules/corrector/index'
+import { countWords, DEFAULT_OPTIONS } from '../modules/auth/counter/index'
+import { getAllPreviews, convertToStyle, STYLES, type UnicodeStyle } from '../modules/auth/unicode/index'
+import { filterSymbols, getCategories, type Platform } from '../modules/auth/symbols/index'
+import { getCurrentUser, signInWithEmail, signUpWithEmail, signOut, onAuthChange } from '../modules/auth/index'
+import { getTemplates, createTemplate, deleteTemplate } from '../modules/auth/templates/index'
+import { checkText } from '../modules/auth/corrector/index'
+
 import { escapeHtml, sanitizeTemplateContent, sanitizeInput } from '../lib/security'
 
 import { onConnectivityChange } from '../lib/connectivity'
