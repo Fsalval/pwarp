@@ -39,52 +39,6 @@ export function initEditor(root: HTMLElement): void {
 
 function buildShell(): string {
   return `
-    <header id="auth-header" class="auth-header"></header>
-
-    <!-- Registro (modal/panel) -->
-    <div id="register-modal" class="register-modal hidden" role="dialog" aria-modal="true" aria-labelledby="register-title">
-      <div class="register-overlay"></div>
-      <div class="register-panel">
-        <div class="register-header">
-          <span id="register-title" class="register-title">Registro</span>
-          <button type="button" class="register-close-btn" id="btn-register-close" aria-label="Cerrar">✕</button>
-        </div>
-
-        <form id="register-form" class="auth-form" autocomplete="off">
-          <div class="register-field">
-            <label class="register-label" for="reg-email">Correo</label>
-            <input id="reg-email" class="hdr-input" type="email" placeholder="tu@email.com" autocomplete="email" />
-          </div>
-
-          <div class="register-field">
-            <label class="register-label" for="reg-user">Usuario</label>
-            <input id="reg-user" class="hdr-input" type="text" placeholder="Nombre de usuario (opcional)" autocomplete="username" />
-            <small class="field-hint">Se usará la parte antes del @ si lo dejas vacío</small>
-          </div>
-
-          <div class="register-field">
-            <label class="register-label" for="reg-password">Contraseña</label>
-            <div class="password-input-wrap">
-              <input id="reg-password" class="hdr-input" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
-              <button type="button" class="password-eye-btn" data-eye-target="reg-password" aria-label="Mostrar/ocultar">👁</button>
-            </div>
-          </div>
-
-          <div class="register-field">
-            <label class="register-label" for="reg-confirm-password">Confirmar contraseña</label>
-            <div class="password-input-wrap">
-              <input id="reg-confirm-password" class="hdr-input" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" />
-              <button type="button" class="password-eye-btn" data-eye-target="reg-confirm-password" aria-label="Mostrar/ocultar">👁</button>
-            </div>
-          </div>
-
-          <div class="register-error" id="register-error" class="hidden"></div>
-
-          <button type="submit" class="hdr-btn hdr-btn-login" id="btn-register-submit">Crear cuenta</button>
-          <div class="auth-hint">Al registrarte, entrarás automáticamente.</div>
-        </form>
-      </div>
-    </div>
 
     <div class="app-shell">
     <div id="offline-banner" class="offline-banner hidden">
@@ -845,39 +799,12 @@ function renderAuthHeader(user: User | null): void {
     header.innerHTML = `
       <div class="auth-header-content">
         <div class="auth-header-form">
-          <input id="hdr-email" type="email" class="hdr-input" placeholder="Email" autocomplete="email"/>
-          <input id="hdr-password" type="password" class="hdr-input" placeholder="Contraseña" autocomplete="current-password"/>
-          <button type="button" class="hdr-btn hdr-btn-login" id="hdr-btn-login">Entrar</button>
-          <button type="button" class="hdr-btn hdr-btn-register" id="hdr-btn-register">Registro</button>
           <button type="button" class="hdr-btn hdr-btn-google" id="hdr-btn-google">Entrar con Google</button>
           <div id="hdr-login-error" class="hdr-login-error hidden" role="alert" aria-live="polite"></div>
         </div>
       </div>
     `
 
-      document.getElementById('hdr-btn-login')!.addEventListener('click', async () => {
-    const email = (document.getElementById('hdr-email') as HTMLInputElement).value
-    const password = (document.getElementById('hdr-password') as HTMLInputElement).value
-    const errEl = document.getElementById('hdr-login-error')
-
-    if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden') }
-    if (!email || !password) return
-
-    const btn = document.getElementById('hdr-btn-login')!
-    btn.textContent = '...'
-    btn.setAttribute('disabled', '')
-
-    const { error } = await signInWithEmail(email, password)
-    if (error) {
-      if (errEl) { errEl.textContent = error; errEl.classList.remove('hidden') }
-      btn.textContent = 'Entrar'
-      btn.removeAttribute('disabled')
-      return
-    }
-
-    const user = await getCurrentUser()
-    renderAuthHeader(user)
-  })
 
   document.getElementById('hdr-btn-google')!.addEventListener('click', async () => {
   const btn = document.getElementById('hdr-btn-google')!
@@ -896,32 +823,7 @@ function renderAuthHeader(user: User | null): void {
   if (url) window.location.href = url
 })
 
-document.getElementById('hdr-btn-register')!.addEventListener('click', async () => {
-      const modal = document.getElementById('register-modal')
-      if (!modal) return
 
-      // precargar email desde header
-      const email = (document.getElementById('hdr-email') as HTMLInputElement | null)?.value ?? ''
-      const emailInput = document.getElementById('reg-email') as HTMLInputElement | null
-      if (emailInput) emailInput.value = email
-
-      const userInput = document.getElementById('reg-user') as HTMLInputElement | null
-      if (userInput) userInput.value = email ? email.split('@')[0] : ''
-
-      modal.classList.remove('hidden')
-      modal.classList.add('show')
-
-      // Enfocar
-      ;(document.getElementById('reg-email') as HTMLInputElement | null)?.focus()
-    })
-
-  } else {
-        header.innerHTML = `
-          <div class="auth-header-content">
-            <span class="hdr-user-email">${user.username ?? user.email}</span>
-            <button type="button" class="hdr-btn hdr-btn-logout" id="hdr-btn-logout">Cerrar sesión</button>
-          </div>
-        `
 
     document.getElementById('hdr-btn-logout')!.addEventListener('click', async () => {
       await signOut()
