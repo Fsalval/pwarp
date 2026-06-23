@@ -1,7 +1,7 @@
 import { countWords, DEFAULT_OPTIONS } from '../modules/auth/counter/index'
 import { getAllPreviews, convertToStyle, STYLES, type UnicodeStyle } from '../modules/auth/unicode/index'
 import { filterSymbols, getCategories, type Platform } from '../modules/auth/symbols/index'
-import { getCurrentUser, signInWithEmail, signUpWithEmail, signOut, onAuthChange, signInWithGoogle } from '../modules/auth/index'
+import { getCurrentUser, signUpWithEmail, signOut, onAuthChange, signInWithGoogle } from '../modules/auth/index'
 import { getTemplates, createTemplate, deleteTemplate } from '../modules/auth/templates/index'
 import { checkText } from '../modules/auth/corrector/index'
 
@@ -39,6 +39,52 @@ export function initEditor(root: HTMLElement): void {
 
 function buildShell(): string {
   return `
+    <header id="auth-header" class="auth-header"></header>
+
+    <!-- Registro (modal/panel) -->
+    <div id="register-modal" class="register-modal hidden" role="dialog" aria-modal="true" aria-labelledby="register-title">
+      <div class="register-overlay"></div>
+      <div class="register-panel">
+        <div class="register-header">
+          <span id="register-title" class="register-title">Registro</span>
+          <button type="button" class="register-close-btn" id="btn-register-close" aria-label="Cerrar">✕</button>
+        </div>
+
+        <form id="register-form" class="auth-form" autocomplete="off">
+          <div class="register-field">
+            <label class="register-label" for="reg-email">Correo</label>
+            <input id="reg-email" class="hdr-input" type="email" placeholder="tu@email.com" autocomplete="email" />
+          </div>
+
+          <div class="register-field">
+            <label class="register-label" for="reg-user">Usuario</label>
+            <input id="reg-user" class="hdr-input" type="text" placeholder="Nombre de usuario (opcional)" autocomplete="username" />
+            <small class="field-hint">Se usará la parte antes del @ si lo dejas vacío</small>
+          </div>
+
+          <div class="register-field">
+            <label class="register-label" for="reg-password">Contraseña</label>
+            <div class="password-input-wrap">
+              <input id="reg-password" class="hdr-input" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+              <button type="button" class="password-eye-btn" data-eye-target="reg-password" aria-label="Mostrar/ocultar">👁</button>
+            </div>
+          </div>
+
+          <div class="register-field">
+            <label class="register-label" for="reg-confirm-password">Confirmar contraseña</label>
+            <div class="password-input-wrap">
+              <input id="reg-confirm-password" class="hdr-input" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" />
+              <button type="button" class="password-eye-btn" data-eye-target="reg-confirm-password" aria-label="Mostrar/ocultar">👁</button>
+            </div>
+          </div>
+
+          <div class="register-error" id="register-error" class="hidden"></div>
+
+          <button type="submit" class="hdr-btn hdr-btn-login" id="btn-register-submit">Crear cuenta</button>
+          <div class="auth-hint">Al registrarte, entrarás automáticamente.</div>
+        </form>
+      </div>
+    </div>
 
     <div class="app-shell">
     <div id="offline-banner" class="offline-banner hidden">
@@ -795,6 +841,7 @@ function bindRegisterView(): void {
 function renderAuthHeader(user: User | null): void {
   const header = document.getElementById('auth-header')!
 
+  // No logueado: solo Google
   if (!user) {
     header.innerHTML = `
       <div class="auth-header-content">
@@ -805,30 +852,41 @@ function renderAuthHeader(user: User | null): void {
       </div>
     `
 
+    document.getElementById('hdr-btn-google')!.addEventListener('click', async () => {
+      const btn = document.getElementById('hdr-btn-google')!
+      const errEl = document.getElementById('hdr-login-error')
 
-  document.getElementById('hdr-btn-google')!.addEventListener('click', async () => {
-  const btn = document.getElementById('hdr-btn-google')!
-  const errEl = document.getElementById('hdr-login-error')
-  btn.textContent = '...'
-  btn.setAttribute('disabled', '')
+      btn.textContent = '...'
+      btn.setAttribute('disabled', '')
 
-  const { url, error } = await signInWithGoogle()
-  if (error) {
-    if (errEl) { errEl.textContent = error; errEl.classList.remove('hidden') }
-    btn.textContent = 'Entrar con Google'
-    btn.removeAttribute('disabled')
+      const { url, error } = await signInWithGoogle()
+      if (error) {
+        if (errEl) {
+          errEl.textContent = error
+          errEl.classList.remove('hidden')
+        }
+        btn.textContent = 'Entrar con Google'
+        btn.removeAttribute('disabled')
+        return
+      }
+
+      if (url) window.location.href = url
+    })
+
     return
   }
 
-  if (url) window.location.href = url
-})
+  // Logueado: correo + cerrar sesión
+  header.innerHTML = `
+    <div class="auth-header-content">
+      <span class="hdr-user-email">${escapeHtml(user.username ?? user.email)}</span>
+      <button type="button" class="hdr-btn hdr-btn-logout" id="hdr-btn-logout">Cerrar sesión</button>
+    </div>
+  `
 
-
-
-    document.getElementById('hdr-btn-logout')!.addEventListener('click', async () => {
-      await signOut()
-    })
-  }
+  document.getElementById('hdr-btn-logout')?.addEventListener('click', async () => {
+    await signOut()
+  })
 }
 
 // ─── Tab Plantillas ───────────────────────────────────────────────
