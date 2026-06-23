@@ -128,3 +128,18 @@ export function onAuthChange(
 
   return () => subscription.unsubscribe()
 }
+
+// Login con Google
+export async function signInWithGoogle(): Promise<{ url?: string; error?: string | null }> {
+  try {
+    const redirectTo = window.location.origin
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo }
+    })
+    if (error) return { error: error.message }
+    return { url: (data as any)?.url, error: null }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+}

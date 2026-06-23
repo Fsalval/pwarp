@@ -1,7 +1,7 @@
 import { countWords, DEFAULT_OPTIONS } from '../modules/auth/counter/index'
 import { getAllPreviews, convertToStyle, STYLES, type UnicodeStyle } from '../modules/auth/unicode/index'
 import { filterSymbols, getCategories, type Platform } from '../modules/auth/symbols/index'
-import { getCurrentUser, signInWithEmail, signUpWithEmail, signOut, onAuthChange } from '../modules/auth/index'
+import { getCurrentUser, signInWithEmail, signUpWithEmail, signOut, onAuthChange, signInWithGoogle } from '../modules/auth/index'
 import { getTemplates, createTemplate, deleteTemplate } from '../modules/auth/templates/index'
 import { checkText } from '../modules/auth/corrector/index'
 
@@ -849,26 +849,52 @@ function renderAuthHeader(user: User | null): void {
           <input id="hdr-password" type="password" class="hdr-input" placeholder="Contraseña" autocomplete="current-password"/>
           <button type="button" class="hdr-btn hdr-btn-login" id="hdr-btn-login">Entrar</button>
           <button type="button" class="hdr-btn hdr-btn-register" id="hdr-btn-register">Registro</button>
+          <button type="button" class="hdr-btn hdr-btn-google" id="hdr-btn-google">Entrar con Google</button>
+          <div id="hdr-login-error" class="hdr-login-error hidden" role="alert" aria-live="polite"></div>
         </div>
       </div>
     `
 
-    document.getElementById('hdr-btn-login')!.addEventListener('click', async () => {
-      const email = (document.getElementById('hdr-email') as HTMLInputElement).value
-      const password = (document.getElementById('hdr-password') as HTMLInputElement).value
+      document.getElementById('hdr-btn-login')!.addEventListener('click', async () => {
+    const email = (document.getElementById('hdr-email') as HTMLInputElement).value
+    const password = (document.getElementById('hdr-password') as HTMLInputElement).value
+    const errEl = document.getElementById('hdr-login-error')
 
-      if (!email || !password) return
+    if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden') }
+    if (!email || !password) return
 
-      const btn = document.getElementById('hdr-btn-login')!
-      btn.textContent = '...'
-      btn.setAttribute('disabled', '')
+    const btn = document.getElementById('hdr-btn-login')!
+    btn.textContent = '...'
+    btn.setAttribute('disabled', '')
 
-      const { error } = await signInWithEmail(email, password)
-      if (error) {
-        btn.textContent = 'Entrar'
-        btn.removeAttribute('disabled')
-      }
-    })
+    const { error } = await signInWithEmail(email, password)
+    if (error) {
+      if (errEl) { errEl.textContent = error; errEl.classList.remove('hidden') }
+      btn.textContent = 'Entrar'
+      btn.removeAttribute('disabled')
+      return
+    }
+
+    const user = await getCurrentUser()
+    renderAuthHeader(user)
+  })
+
+  document.getElementById('hdr-btn-google')!.addEventListener('click', async () => {
+  const btn = document.getElementById('hdr-btn-google')!
+  const errEl = document.getElementById('hdr-login-error')
+  btn.textContent = '...'
+  btn.setAttribute('disabled', '')
+
+  const { url, error } = await signInWithGoogle()
+  if (error) {
+    if (errEl) { errEl.textContent = error; errEl.classList.remove('hidden') }
+    btn.textContent = 'Entrar con Google'
+    btn.removeAttribute('disabled')
+    return
+  }
+
+  if (url) window.location.href = url
+})
 
 document.getElementById('hdr-btn-register')!.addEventListener('click', async () => {
       const modal = document.getElementById('register-modal')
@@ -1325,7 +1351,6 @@ function bindCorrector(): void {
         ` : ''}
       </div>
     `).join('')
-
 
     // Handler reutilizable para botones de reemplazo
     async function handleReplace(replaceBtn: HTMLButtonElement) {
