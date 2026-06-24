@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase'
 import type { User } from '../../types/index'
-import { sanitizeInput, validateUserData } from '../../lib/security'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 // Devuelve el usuario actual o null si no hay sesión
 export async function getCurrentUser(): Promise<User | null> {
@@ -20,84 +20,6 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
-// Login con email y contraseña
-export async function signInWithEmail(
-  email: string,
-  password: string
-): Promise<{ user: User | null; error: string | null }> {
-  // ✅ Sanitizar email antes de enviar
-  const sanitizedEmail = sanitizeInput(email)
-  
-  const { data, error } = await supabase.auth.signInWithPassword({ 
-    email: sanitizedEmail, 
-    password 
-  })
-
-  if (error) return { user: null, error: error.message }
-  if (!data.user) return { user: null, error: 'No se pudo iniciar sesión' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username')
-    .eq('id', data.user.id)
-    .single()
-
-  return {
-    user: { 
-      id: data.user.id, 
-      email: data.user.email ?? '',
-      username: profile?.username 
-    },
-    error: null,
-  }
-}
-
-// Registro con email, contraseña y username
-export async function signUpWithEmail(
-  email: string,
-  password: string,
-  username?: string
-): Promise<{ user: User | null; error: string | null }> {
-  
-  // ✅ VALIDAR datos antes de enviar
-  const validation = validateUserData({ email, username, password })
-  if (!validation.valid) {
-    return { user: null, error: validation.errors.join(', ') }
-  }
-  
-  // ✅ SANITIZAR inputs
-  const sanitizedEmail = sanitizeInput(email)
-  const sanitizedUsername = username ? sanitizeInput(username) : undefined
-  
-  const { data, error } = await supabase.auth.signUp({ 
-    email: sanitizedEmail, 
-    password,
-    options: {
-      data: {
-        username: sanitizedUsername || sanitizedEmail.split('@')[0]
-      }
-    }
-  })
-
-  if (error) return { user: null, error: error.message }
-  if (!data.user) return { user: null, error: 'No se pudo crear la cuenta' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username')
-    .eq('id', data.user.id)
-    .single()
-
-  return {
-    user: { 
-      id: data.user.id, 
-      email: data.user.email ?? '',
-      username: profile?.username 
-    },
-    error: null,
-  }
-}
-
 // Cerrar sesión
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
@@ -107,7 +29,7 @@ export async function signOut(): Promise<void> {
 export function onAuthChange(
   callback: (user: User | null) => void
 ): () => void {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
     if (!session?.user) {
       callback(null)
       return
