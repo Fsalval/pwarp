@@ -12,37 +12,54 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * Comprueba si el usuario ya tiene fila en `profiles`.
  * Devuelve true si es usuario nuevo (no existe en profiles).
  */
-async function isNewUser(client: SupabaseClient, userId: string): Promise<boolean> {
+async function shouldShowModal(client: SupabaseClient, userId: string): Promise<boolean> {
   const { data, error } = await client
     .from('profiles')
-    .select('id')
+    .select('accepted_terms')
     .eq('id', userId)
     .maybeSingle()
 
   if (error) {
     console.error('[LegalModal] Error al consultar profiles:', error.message)
-    // Si falla la consulta, tratamos como nuevo para no saltarnos el modal
     return true
   }
 
-  return data === null
+  return data === null || data.accepted_terms !== true
 }
 
 /**
  * Crea la fila en `profiles` con los datos del usuario de Google.
  */
-async function createProfile(client: SupabaseClient, userId: string, email: string, username: string): Promise<void> {
-  const { error } = await client
+async function acceptTermsAndCreateProfile(
+  client: SupabaseClient, 
+  userId: string, 
+  email: string, 
+  username: string
+): Promise<void> {
+  const { data: existing } = await client
     .from('profiles')
-    .insert({
-      id: userId,
-      email,
-      username,
-    })
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle()
 
-  if (error) {
-    console.error('[LegalModal] Error al crear profile:', error.message)
-    throw error
+  if (existing) {
+    const { error } = await client
+      .from('profiles')
+      .update({ accepted_terms: true })
+      .eq('id', userId)
+
+    if (error) throw error
+  } else {
+    const { error } = await client
+      .from('profiles')
+      .insert({
+        id: userId,
+        email,
+        username,
+        accepted_terms: true,
+      })
+
+    if (error) throw error
   }
 }
 
@@ -212,9 +229,9 @@ export function initLegalModal(client: SupabaseClient): void {
       email.split('@')[0] ??
       'usuario'
 
-    const newUser = await isNewUser(client, userId)
+    const show = await isNewUser(client, userId)
 
-    if (!newUser) {
+    if (!show) {
       // Usuario existente → entra directo, sin modal
       hideModal()
       return
@@ -236,7 +253,7 @@ export function initLegalModal(client: SupabaseClient): void {
     newAccept.addEventListener('click', async () => {
       setLoading(true)
       try {
-        await createProfile(client, userId, email, username)
+        await acceptTermsAndCreateProfile(client, userId, email, username)
         hideModal()
       } catch {
         setLoading(false)
