@@ -229,7 +229,7 @@ export function initLegalModal(client: SupabaseClient): void {
       email.split('@')[0] ??
       'usuario'
 
-    const show = await isNewUser(client, userId)
+    const show = await shouldShowModal(client, userId)
 
     if (!show) {
       // Usuario existente → entra directo, sin modal
