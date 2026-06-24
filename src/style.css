@@ -1476,3 +1476,210 @@ select.tpl-input option {
   background: #2a2a4a;
   border-radius: 4px;
 }
+
+/* ── Modal Legal ── */
+.legal-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.legal-modal.visible {
+  display: flex;
+}
+
+.legal-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.legal-modal-box {
+  position: relative;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.legal-modal-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #e2e2f0;
+  margin-bottom: 0.5rem;
+}
+
+.legal-modal-subtitle {
+  font-size: 0.9rem;
+  color: #9999bb;
+  margin-bottom: 1rem;
+}
+
+.legal-modal-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #2a2a4a;
+  padding-bottom: 8px;
+}
+
+.legal-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #7777aa;
+  padding: 6px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.15s;
+}
+
+.legal-tab-btn:hover {
+  color: #e2e2f0;
+  background: #1e1e36;
+}
+
+.legal-tab-btn.active {
+  background: #2a2a4a;
+  border-color: #44446a;
+  color: #e2e2f0;
+}
+
+.legal-tab-panel {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.legal-tab-panel.active {
+  display: flex;
+}
+
+.legal-scroll {
+  flex: 1;
+  overflow-y: auto;
+  background: #16162a;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  max-height: 300px;
+}
+
+.legal-scroll h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #afa9ec;
+  margin-bottom: 0.75rem;
+}
+
+.legal-scroll p {
+  font-size: 0.85rem;
+  color: #9999bb;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.legal-scroll ul {
+  list-style: none;
+  padding: 0;
+}
+
+.legal-scroll li {
+  font-size: 0.85rem;
+  color: #9999bb;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.legal-scroll li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #534AB7;
+}
+
+.legal-scroll li strong {
+  color: #e2e2f0;
+}
+
+.legal-modal-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.legal-btn-accept {
+  flex: 1;
+  background: #534AB7;
+  border: 1px solid #6a5ac9;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.legal-btn-accept:hover:not(:disabled) {
+  background: #6a5ac9;
+}
+
+.legal-btn-accept:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.legal-btn-reject {
+  background: transparent;
+  border: 1px solid #664444;
+  color: #cc8888;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.15s;
+}
+
+.legal-btn-reject:hover:not(:disabled) {
+  background: #2a1a1a;
+  border-color: #884444;
+}
+
+.legal-btn-reject:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.legal-modal-error {
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #2a1a1a;
+  border: 1px solid #664444;
+  color: #cc8888;
+  margin-top: 0.75rem;
+}
+
+.legal-modal-error.hidden {
+  display: none;
+}
