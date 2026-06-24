@@ -841,7 +841,12 @@ async function renderSymbols(): Promise<void> {
 // ─── Auth Header ──────────────────────────────────────────────────
 
 function bindAuth(): void {
-  getCurrentUser().then(user => renderAuthHeader(user))
+  getCurrentUser()
+    .then(user => renderAuthHeader(user))
+    .catch(error => {
+      console.error('[Auth] Error:', error)
+      renderAuthHeader(null)
+    })
 
   onAuthChange(user => {
     renderAuthHeader(user)
