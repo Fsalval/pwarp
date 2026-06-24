@@ -36,55 +36,173 @@ export function initEditor(root: HTMLElement): void {
   bindConnectivity()
 }
 
+const QUICK_SYMBOLS_FAV_KEY = 'rpwv.quickSymbols.favs'
+
+function loadQuickSymbolsFavs(): string[] {
+  try {
+    const raw = localStorage.getItem(QUICK_SYMBOLS_FAV_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(x => typeof x === 'string')
+  } catch {
+    return []
+  }
+}
+
+function saveQuickSymbolsFavs(favs: string[]): void {
+  try {
+    localStorage.setItem(QUICK_SYMBOLS_FAV_KEY, JSON.stringify(favs.slice(0, 24)))
+  } catch {
+    // ignore
+  }
+}
+
+function insertSymbolAtSelection(editor: HTMLTextAreaElement, symbol: string): void {
+  const start = editor.selectionStart
+  const end = editor.selectionEnd
+  editor.value = editor.value.slice(0, start) + symbol + editor.value.slice(end)
+  editor.selectionStart = editor.selectionEnd = start + symbol.length
+  editor.dispatchEvent(new Event('input'))
+}
+
+function bindQuickSymbols(editor: HTMLTextAreaElement): void {
+  const btnToggle = document.getElementById('btn-quick-symbols') as HTMLButtonElement | null
+  const panel = document.getElementById('quick-symbols-panel') as HTMLElement | null
+  const btnClose = document.getElementById('btn-quick-symbols-close') as HTMLButtonElement | null
+  const searchInput = document.getElementById('quick-symbols-search') as HTMLInputElement | null
+  const favsEl = document.getElementById('quick-symbols-favs') as HTMLElement | null
+  const gridEl = document.getElementById('quick-symbols-grid') as HTMLElement | null
+
+  if (!btnToggle || !panel || !btnClose || !searchInput || !favsEl || !gridEl) return
+
+  let favs = loadQuickSymbolsFavs()
+  let activeQuery = ''
+
+  const togglePanel = (open: boolean) => {
+    panel.classList.toggle('hidden', !open)
+    btnToggle.setAttribute('aria-expanded', open ? 'true' : 'false')
+  }
+
+  const renderFavs = () => {
+    favsEl.innerHTML = favs.length
+      ? favs.map(sym => `
+          <button type="button" class="quick-symbols-fav" data-sym="${sym}" title="Favorito" aria-label="Insertar favorito">
+            <span class="quick-symbols-fav-char">${sym}</span>
+            <span class="quick-symbols-fav-remove" data-action="remove" data-sym="${sym}">✕</span>
+          </button>
+        `).join('')
+      : `<div class="quick-symbols-favs-empty">Favoritos (vacío)</div>`
+
+    favsEl.querySelectorAll<HTMLButtonElement>('.quick-symbols-fav').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement
+        const sym = btn.dataset['sym'] ?? ''
+        if (!sym) return
+
+        const action = target.dataset['action']
+        if (action === 'remove') {
+          favs = favs.filter(x => x !== sym)
+          saveQuickSymbolsFavs(favs)
+          renderFavs()
+          return
+        }
+
+        insertSymbolAtSelection(editor, sym)
+      })
+    })
+  }
+
+  const renderGrid = async (query: string) => {
+    gridEl.innerHTML = '<div class="quick-symbols-loading">Cargando...</div>'
+
+    const symbols = await filterSymbols({
+      query: query || undefined,
+      category: undefined,
+      platform: undefined,
+    })
+
+    const top = symbols.slice(0, 30)
+    if (top.length === 0) {
+      gridEl.innerHTML = '<div class="quick-symbols-empty">Sin resultados</div>'
+      return
+    }
+
+    gridEl.innerHTML = top.map(s => {
+      const isFav = favs.includes(s.symbol)
+      return `
+        <button type="button" class="quick-symbols-item" data-symbol="${s.symbol}" title="${s.name}">
+          <span class="quick-symbols-item-char">${s.symbol}</span>
+          <span class="quick-symbols-item-meta">${isFav ? '★' : '☆'}</span>
+        </button>
+      `
+    }).join('')
+
+    gridEl.querySelectorAll<HTMLButtonElement>('.quick-symbols-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const sym = btn.dataset['symbol'] ?? ''
+        if (!sym) return
+
+        if ((e as MouseEvent).shiftKey) {
+          favs = favs.includes(sym) ? favs.filter(x => x !== sym) : [sym, ...favs]
+          saveQuickSymbolsFavs(favs)
+          renderFavs()
+          renderGrid(activeQuery)
+          return
+        }
+
+        insertSymbolAtSelection(editor, sym)
+      })
+
+      btn.addEventListener('contextmenu', (ev) => {
+        ev.preventDefault()
+        const sym = btn.dataset['symbol'] ?? ''
+        if (!sym) return
+        favs = favs.includes(sym) ? favs.filter(x => x !== sym) : [sym, ...favs]
+        saveQuickSymbolsFavs(favs)
+        renderFavs()
+        renderGrid(activeQuery)
+      })
+    })
+  }
+
+  // init
+  renderFavs()
+
+  btnToggle.addEventListener('click', () => {
+    const isOpen = panel.classList.contains('hidden')
+    togglePanel(isOpen)
+
+    if (!isOpen) return
+
+    activeQuery = searchInput.value.trim()
+    renderFavs()
+    renderGrid(activeQuery)
+  })
+
+  btnClose.addEventListener('click', () => togglePanel(false))
+
+  document.addEventListener('mousedown', (e) => {
+    if (panel.classList.contains('hidden')) return
+    const t = e.target as Node
+    if (panel.contains(t)) return
+    if (btnToggle.contains(t)) return
+    togglePanel(false)
+  })
+
+  searchInput.addEventListener('input', () => {
+    activeQuery = searchInput.value.trim()
+    if ((searchInput as any).__debounce) clearTimeout((searchInput as any).__debounce)
+    ;(searchInput as any).__debounce = setTimeout(() => renderGrid(activeQuery), 120)
+  })
+}
+
+
 
 function buildShell(): string {
   return `
     <header id="auth-header" class="auth-header"></header>
 
-    <!-- Registro (modal/panel) -->
-    <div id="register-modal" class="register-modal hidden" role="dialog" aria-modal="true" aria-labelledby="register-title">
-      <div class="register-overlay"></div>
-      <div class="register-panel">
-        <div class="register-header">
-          <span id="register-title" class="register-title">Registro</span>
-          <button type="button" class="register-close-btn" id="btn-register-close" aria-label="Cerrar">✕</button>
-        </div>
-
-        <form id="register-form" class="auth-form" autocomplete="off">
-          <div class="register-field">
-            <label class="register-label" for="reg-email">Correo</label>
-            <input id="reg-email" class="hdr-input" type="email" placeholder="tu@email.com" autocomplete="email" />
-          </div>
-
-          <div class="register-field">
-            <label class="register-label" for="reg-user">Usuario</label>
-            <input id="reg-user" class="hdr-input" type="text" placeholder="Nombre de usuario (opcional)" autocomplete="username" />
-            <small class="field-hint">Se usará la parte antes del @ si lo dejas vacío</small>
-          </div>
-
-          <div class="register-field">
-            <label class="register-label" for="reg-password">Contraseña</label>
-            <div class="password-input-wrap">
-              <input id="reg-password" class="hdr-input" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
-              <button type="button" class="password-eye-btn" data-eye-target="reg-password" aria-label="Mostrar/ocultar">👁</button>
-            </div>
-          </div>
-
-          <div class="register-field">
-            <label class="register-label" for="reg-confirm-password">Confirmar contraseña</label>
-            <div class="password-input-wrap">
-              <input id="reg-confirm-password" class="hdr-input" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" />
-              <button type="button" class="password-eye-btn" data-eye-target="reg-confirm-password" aria-label="Mostrar/ocultar">👁</button>
-            </div>
-          </div>
-
-          <div class="register-error" id="register-error" class="hidden"></div>
-
-          <button type="submit" class="hdr-btn hdr-btn-login" id="btn-register-submit">Crear cuenta</button>
-          <div class="auth-hint">Al registrarte, entrarás automáticamente.</div>
-        </form>
-      </div>
-    </div>
 
     <div class="app-shell">
     <div id="offline-banner" class="offline-banner hidden">
@@ -115,8 +233,34 @@ function buildShell(): string {
               <button type="button" class="check-btn" id="btn-copy-all">Copiar todo</button>
               <button type="button" class="check-btn" id="btn-open-drafts-modal">→ Borradores</button>
               <button type="button" class="check-btn" id="btn-check">Revisar texto</button>
+
+              <div class="quick-symbols">
+                <button type="button" class="check-btn quick-symbols-toggle" id="btn-quick-symbols" aria-expanded="false">
+                  ☰ Símbolos
+                </button>
+
+                <div class="quick-symbols-panel hidden" id="quick-symbols-panel">
+                  <div class="quick-symbols-top">
+                    <input
+                      id="quick-symbols-search"
+                      type="text"
+                      placeholder="Buscar símbolo..."
+                      autocomplete="off"
+                      spellcheck="false"
+                    />
+                    <button type="button" class="quick-symbols-close" id="btn-quick-symbols-close" aria-label="Cerrar">
+                      ✕
+                    </button>
+                  </div>
+
+                  <div class="quick-symbols-favs" id="quick-symbols-favs"></div>
+
+                  <div class="quick-symbols-grid" id="quick-symbols-grid"></div>
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
 
         <div id="corrector-panel" class="corrector-panel hidden">
@@ -415,8 +559,6 @@ function bindEditor(): void {
     const n = countWords(editor.value, DEFAULT_OPTIONS)
     counter.textContent = `${n} ${n === 1 ? 'palabra' : 'palabras'}`
 
-    // Si el corrector está abierto, NO lo cerramos cuando la modificación
-    // proviene de una aplicación programática de sugerencia. Usamos
     // `suppressCorrectorClose` para distinguir la fuente del input.
     const correctorPanel = document.getElementById('corrector-panel')!
     if (!correctorPanel.classList.contains('hidden')) {
@@ -438,6 +580,8 @@ function bindEditor(): void {
     highlight.scrollTop = editor.scrollTop
     highlight.scrollLeft = editor.scrollLeft
   })
+
+  bindQuickSymbols(editor)
 
   function checkSelection(): void {
     const start = editor.selectionStart
