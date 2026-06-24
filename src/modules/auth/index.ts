@@ -29,7 +29,7 @@ export async function signOut(): Promise<void> {
 export function onAuthChange(
   callback: (user: User | null) => void
 ): () => void {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
     if (!session?.user) {
       callback(null)
       return

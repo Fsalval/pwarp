@@ -1,7 +1,7 @@
 import { countWords, DEFAULT_OPTIONS } from '../modules/auth/counter/index'
 import { getAllPreviews, convertToStyle, STYLES, type UnicodeStyle } from '../modules/auth/unicode/index'
 import { filterSymbols, getCategories, type Platform } from '../modules/auth/symbols/index'
-import { getCurrentUser, signUpWithEmail, signOut, onAuthChange, signInWithGoogle } from '../modules/auth/index'
+import { getCurrentUser, signOut, onAuthChange, signInWithGoogle } from '../modules/auth/index'
 import { getTemplates, createTemplate, deleteTemplate } from '../modules/auth/templates/index'
 import { checkText } from '../modules/auth/corrector/index'
 
@@ -25,7 +25,6 @@ export function initEditor(root: HTMLElement): void {
   root.innerHTML = buildShell()
   bindAuth()
   bindTabs()
-  bindRegisterView()
   bindEditor()
   bindFuentes()
   bindSimbolos()
@@ -848,136 +847,6 @@ function bindAuth(): void {
     renderAuthHeader(user)
     const modal = document.getElementById('register-modal')
     if (modal && user) modal.classList.add('hidden')
-  })
-}
-
-function bindRegisterView(): void {
-  const modal = document.getElementById('register-modal')!
-  if (!modal) return
-
-  const closeBtn = document.getElementById('btn-register-close')
-  const emailInput = document.getElementById('reg-email') as HTMLInputElement | null
-  const userInput = document.getElementById('reg-user') as HTMLInputElement | null
-  const passwordInput = document.getElementById('reg-password') as HTMLInputElement | null
-  const confirmInput = document.getElementById('reg-confirm-password') as HTMLInputElement | null
-  const errorEl = document.getElementById('register-error')
-  const form = document.getElementById('register-form') as HTMLFormElement | null
-
-  function hide(): void {
-    modal.classList.add('hidden')
-    modal.classList.remove('show')
-  }
-
-  closeBtn?.addEventListener('click', (e) => {
-    e.preventDefault()
-    hide()
-  })
-
-  modal.addEventListener('mousedown', (e) => {
-    const target = e.target as HTMLElement
-    if (target.classList.contains('register-overlay')) {
-      hide()
-    }
-  })
-
-  // HABILITAR el campo de usuario y hacerlo editable
-  if (userInput) {
-    userInput.disabled = false
-    userInput.placeholder = 'Nombre de usuario (opcional)'
-  }
-
-
-  // Ojo para mostrar/ocultar contraseña
-  modal.querySelectorAll<HTMLButtonElement>('.password-eye-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset['eye-target']
-      const input = (id ? document.getElementById(id) : null) as HTMLInputElement | null
-      if (!input) return
-      const isPassword = input.type === 'password'
-      input.type = isPassword ? 'text' : 'password'
-    })
-  })
-
-    form?.addEventListener('submit', async (e) => {
-    e.preventDefault()
-
-    const email = emailInput?.value.trim() ?? ''
-    const username = userInput?.value.trim() || (email.includes('@') ? email.split('@')[0] : '')
-    const password = passwordInput?.value ?? ''
-    const confirmPassword = confirmInput?.value ?? ''
-
-    // ✅ VALIDAR EMAIL
-    if (!email.includes('@') || email.length < 5) {
-      if (errorEl) {
-        errorEl.textContent = 'Email inválido'
-        errorEl.classList.remove('hidden')
-      }
-      return
-    }
-
-    // ✅ VALIDAR USERNAME (si lo proporcionó)
-    if (username && !/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
-      if (errorEl) {
-        errorEl.textContent = 'Username inválido (3-30 caracteres, solo letras, números, guiones)'
-        errorEl.classList.remove('hidden')
-      }
-      return
-    }
-
-    // ✅ VALIDAR CAMPOS OBLIGATORIOS
-    if (!email || !password || !confirmPassword) {
-      if (errorEl) {
-        errorEl.textContent = 'Todos los campos son obligatorios'
-        errorEl.classList.remove('hidden')
-      }
-      return
-    }
-    
-    // ✅ VALIDAR LONGITUD DE CONTRASEÑA
-    if (password.length < 6) {
-      if (errorEl) {
-        errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres'
-        errorEl.classList.remove('hidden')
-      }
-      return
-    }
-    
-    // ✅ VALIDAR QUE LAS CONTRASEÑAS COINCIDAN
-    if (password !== confirmPassword) {
-      if (errorEl) {
-        errorEl.textContent = 'Las contraseñas no coinciden.'
-        errorEl.classList.remove('hidden')
-      }
-      return
-    }
-
-    if (errorEl) {
-      errorEl.textContent = ''
-      errorEl.classList.add('hidden')
-    }
-
-    const submitBtn = document.getElementById('btn-register-submit') as HTMLButtonElement | null
-    if (submitBtn) {
-      submitBtn.textContent = 'Creando...'
-      submitBtn.setAttribute('disabled', '')
-    }
-
-    const { error } = await signUpWithEmail(email, password, username)
-
-    if (submitBtn) {
-      submitBtn.textContent = 'Crear cuenta'
-      submitBtn.removeAttribute('disabled')
-    }
-
-    if (error) {
-      if (errorEl) {
-        errorEl.textContent = error
-        errorEl.classList.remove('hidden')
-      }
-      return
-    }
-
-    hide()
   })
 }
 
