@@ -1683,3 +1683,107 @@ select.tpl-input option {
 .legal-modal-error.hidden {
   display: none;
 }
+
+/* ── Modal de Configuración ── */
+.settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal:not(.hidden) {
+  display: flex;
+}
+
+.settings-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.settings-panel {
+  position: relative;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 450px;
+  width: 90%;
+  z-index: 1;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.settings-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e2e2f0;
+  margin: 0;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-section {
+  background: #16162a;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.settings-section h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #cc8888;
+  margin: 0 0 0.5rem 0;
+}
+
+.settings-section p {
+  font-size: 0.85rem;
+  color: #9999bb;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.hdr-btn-settings {
+  background: #2a2a4a;
+  border: 1px solid #44446a;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+}
+
+.hdr-btn-settings:hover {
+  background: #3a3a6a;
+  border-color: #534AB7;
+}
+
+.hdr-btn-delete {
+  background: #2a1a1a;
+  border: 1px solid #664444;
+  color: #cc8888;
+  width: 100%;
+  padding: 10px;
+  font-weight: 500;
+}
+
+.hdr-btn-delete:hover {
+  background: #3a2a2a;
+  border-color: #884444;
+}

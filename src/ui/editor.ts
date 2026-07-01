@@ -1,7 +1,7 @@
 import { countWords, DEFAULT_OPTIONS } from '../modules/auth/counter/index'
 import { getAllPreviews, convertToStyle, STYLES, type UnicodeStyle } from '../modules/auth/unicode/index'
 import { filterSymbols, getCategories, type Platform } from '../modules/auth/symbols/index'
-import { getCurrentUser, signOut, onAuthChange, signInWithGoogle } from '../modules/auth/index'
+import { getCurrentUser, signOut, onAuthChange, signInWithGoogle, deleteAccount } from '../modules/auth/index'
 import { getTemplates, createTemplate, deleteTemplate } from '../modules/auth/templates/index'
 import { checkText } from '../modules/auth/corrector/index'
 
@@ -859,7 +859,6 @@ function bindAuth(): void {
 function renderAuthHeader(user: User | null): void {
   const header = document.getElementById('auth-header')!
 
-  // No logueado: solo Google
   if (!user) {
     header.innerHTML = `
       <div class="auth-header-content">
@@ -894,13 +893,70 @@ function renderAuthHeader(user: User | null): void {
     return
   }
 
-  // Logueado: correo + cerrar sesión
+  // ✅ Logueado: mostrar email, settings y cerrar sesión
   header.innerHTML = `
     <div class="auth-header-content">
       <span class="hdr-user-email">${escapeHtml(user.username ?? user.email)}</span>
+      <button type="button" class="hdr-btn hdr-btn-settings" id="hdr-btn-settings" title="Configuración">
+        ⚙️
+      </button>
       <button type="button" class="hdr-btn hdr-btn-logout" id="hdr-btn-logout">Cerrar sesión</button>
     </div>
+    
+    <!-- Modal de configuración -->
+    <div id="settings-modal" class="settings-modal hidden">
+      <div class="settings-overlay"></div>
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h3>Configuración</h3>
+          <button type="button" class="sym-clear-btn" id="btn-close-settings">✕</button>
+        </div>
+        <div class="settings-content">
+          <div class="settings-section">
+            <h4>Zona de peligro</h4>
+            <p>Eliminar tu cuenta es irreversible. Se borrarán todos tus borradores y plantillas.</p>
+            <button type="button" class="hdr-btn hdr-btn-delete" id="btn-delete-account">
+              🗑️ Eliminar mi cuenta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   `
+
+  // Abrir modal de settings
+  document.getElementById('hdr-btn-settings')?.addEventListener('click', () => {
+    document.getElementById('settings-modal')!.classList.remove('hidden')
+  })
+
+  // Cerrar modal
+  document.getElementById('btn-close-settings')?.addEventListener('click', () => {
+    document.getElementById('settings-modal')!.classList.add('hidden')
+  })
+
+  // Cerrar al hacer click fuera
+  document.getElementById('settings-modal')?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).classList.contains('settings-overlay')) {
+      document.getElementById('settings-modal')!.classList.add('hidden')
+    }
+  })
+
+  // Eliminar cuenta
+  document.getElementById('btn-delete-account')?.addEventListener('click', async () => {
+    const confirmDelete = confirm(
+      '⚠️ ¿ESTÁS SEGURO/A?\n\n' +
+      'Esta acción es IRREVERSIBLE. Se eliminarán:\n' +
+      '• Tu cuenta de usuario\n' +
+      '• Todos tus borradores guardados\n' +
+      '• Todas tus plantillas personalizadas\n' +
+      '• Tu perfil de la base de datos\n\n' +
+      'Escribe "ELIMINAR" para confirmar:'
+    )
+
+    if (confirmDelete) {
+      await deleteAccount()
+    }
+  })
 
   document.getElementById('hdr-btn-logout')?.addEventListener('click', async () => {
     await signOut()

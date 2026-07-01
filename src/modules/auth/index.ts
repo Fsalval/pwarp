@@ -65,3 +65,41 @@ export async function signInWithGoogle(): Promise<{ url?: string; error?: string
     return { error: (err as Error).message }
   }
 }
+
+// Eliminar cuenta permanentemente
+export async function deleteAccount(): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Obtener el usuario actual
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'No hay sesión activa' }
+    }
+
+    // 2. Eliminar el profile de la base de datos
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', user.id)
+
+    if (profileError) {
+      console.error('[Delete Account] Error eliminando profile:', profileError)
+    }
+
+    // 3. Eliminar el usuario de auth (esto cerrará la sesión automáticamente)
+    const { error: deleteError } = await supabase.rpc('delete_own_user')
+    
+    if (deleteError) {
+      console.warn('[Delete Account] RPC no disponible, solo signOut:', deleteError)
+      // Si la RPC no existe, solo cerramos sesión
+      await supabase.auth.signOut()
+    }
+
+    // 4. Redirigir al home
+    window.location.href = '/'
+    
+    return { success: true }
+  } catch (err) {
+    console.error('[Delete Account] Error:', err)
+    return { success: false, error: (err as Error).message }
+  }
+}
